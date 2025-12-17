@@ -91,16 +91,20 @@ const Calendar = () => {
             status: task.status,
             priority: task.priority,
             project: task.project
-          }
+          },
+          allDay: true
         };
 
-        // Use estimated date if available, otherwise use created date
-        if (task.estimatedDate) {
+        // Simple single-day events for tasks
+        if (task.status === 'completado' && task.completedDate) {
+          baseEvent.start = task.completedDate;
+          baseEvent.title = `✅ ${task.title}`;
+        } else if (task.estimatedDate) {
           baseEvent.start = task.estimatedDate;
-          baseEvent.allDay = true;
+          baseEvent.title = `📋 ${task.title}`;
         } else {
           baseEvent.start = task.createdAt;
-          baseEvent.allDay = true;
+          baseEvent.title = `📋 ${task.title}`;
         }
 
         // Set color based on status and priority
@@ -148,49 +152,54 @@ const Calendar = () => {
         return project.status === filters.projectStatus;
       });
 
-      const projectEvents = filteredProjects.map(project => {
-        const baseEvent = {
-          id: `project-${project.id}`,
-          title: `📁 ${project.name}`,
-          extendedProps: {
-            type: 'project',
-            project: project,
-            description: project.description,
-            status: project.status,
-            priority: project.priority
-          },
-          allDay: true
-        };
+      const projectEvents = [];
+      
+      filteredProjects.forEach(project => {
+        // Create start event
+        if (project.startDate || project.createdAt) {
+          const startEvent = {
+            id: `project-${project.id}-start`,
+            title: `🚀 ${project.name} (Inicio)`,
+            start: project.startDate || project.createdAt,
+            allDay: true,
+            extendedProps: {
+              type: 'project',
+              project: project,
+              description: project.description,
+              status: project.status,
+              priority: project.priority,
+              eventType: 'start'
+            }
+          };
 
-        // Use estimated completion date if available, otherwise use created date
-        if (project.estimatedEndDate) {
-          baseEvent.start = project.estimatedEndDate;
-        } else if (project.endDate) {
-          baseEvent.start = project.endDate;
-        } else {
-          baseEvent.start = project.createdAt;
+          // Set color for start events - always violet (light shade)
+          startEvent.backgroundColor = '#c4b5fd'; // violet-300
+          startEvent.borderColor = '#8b5cf6'; // violet-500
+          projectEvents.push(startEvent);
         }
 
-        // Set color based on project status
-        switch (project.status) {
-          case 'activo':
-            baseEvent.backgroundColor = '#8b5cf6'; // violet-500
-            baseEvent.borderColor = '#7c3aed'; // violet-600
-            break;
-          case 'en_pausa':
-            baseEvent.backgroundColor = '#f59e0b'; // amber-500
-            baseEvent.borderColor = '#d97706'; // amber-600
-            break;
-          case 'terminado':
-            baseEvent.backgroundColor = '#059669'; // emerald-600
-            baseEvent.borderColor = '#047857'; // emerald-700
-            break;
-          default:
-            baseEvent.backgroundColor = '#6b7280'; // gray-500
-            baseEvent.borderColor = '#4b5563'; // gray-600
-        }
+        // Create end event if exists
+        if (project.endDate) {
+          const endEvent = {
+            id: `project-${project.id}-end`,
+            title: `🏁 ${project.name} (Fin)`,
+            start: project.endDate,
+            allDay: true,
+            extendedProps: {
+              type: 'project',
+              project: project,
+              description: project.description,
+              status: project.status,
+              priority: project.priority,
+              eventType: 'end'
+            }
+          };
 
-        return baseEvent;
+          // Set color for end events - always violet (dark shade)
+          endEvent.backgroundColor = '#7c3aed'; // violet-600
+          endEvent.borderColor = '#5b21b6'; // violet-700
+          projectEvents.push(endEvent);
+        }
       });
 
       calendarEvents.push(...projectEvents);
@@ -392,19 +401,15 @@ const Calendar = () => {
 
           {/* Proyectos */}
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">📁 Proyectos</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">📁 Proyectos (Siempre Morado)</h4>
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-violet-500 rounded"></div>
-                <span className="text-xs text-gray-600">Activo</span>
+                <div className="w-4 h-4 bg-violet-300 rounded"></div>
+                <span className="text-xs text-gray-600">🚀 Inicio del Proyecto</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-amber-500 rounded"></div>
-                <span className="text-xs text-gray-600">En Pausa</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-emerald-600 rounded"></div>
-                <span className="text-xs text-gray-600">Terminado</span>
+                <div className="w-4 h-4 bg-violet-600 rounded"></div>
+                <span className="text-xs text-gray-600">🏁 Fin del Proyecto</span>
               </div>
             </div>
           </div>
@@ -553,17 +558,46 @@ const Calendar = () => {
                 )}
 
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Fecha:</p>
-                  <p className="text-gray-800">
-                    {selectedEvent.type === 'task' 
-                      ? selectedEvent.task?.estimatedDate 
-                        ? new Date(selectedEvent.task.estimatedDate).toLocaleDateString()
-                        : 'No definida'
-                      : selectedEvent.project?.estimatedEndDate || selectedEvent.project?.endDate
-                        ? new Date(selectedEvent.project.estimatedEndDate || selectedEvent.project.endDate).toLocaleDateString()
-                        : 'No definida'
-                    }
-                  </p>
+                  <p className="text-sm text-gray-600 mb-1">Fechas:</p>
+                  <div className="text-gray-800">
+                    {selectedEvent.type === 'task' ? (
+                      <div className="space-y-1 text-sm">
+                        {selectedEvent.task?.estimatedDate && (
+                          <div>
+                            <span className="font-medium">Estimada:</span> {new Date(selectedEvent.task.estimatedDate).toLocaleDateString()}
+                          </div>
+                        )}
+                        {selectedEvent.task?.completedDate && (
+                          <div>
+                            <span className="font-medium">Completada:</span> {new Date(selectedEvent.task.completedDate).toLocaleDateString()}
+                          </div>
+                        )}
+                        {!selectedEvent.task?.estimatedDate && !selectedEvent.task?.completedDate && (
+                          <div>
+                            <span className="font-medium">Creada:</span> {new Date(selectedEvent.task.createdAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-1 text-sm">
+                        {selectedEvent.project?.startDate && (
+                          <div>
+                            <span className="font-medium">Inicio:</span> {new Date(selectedEvent.project.startDate).toLocaleDateString()}
+                          </div>
+                        )}
+                        {selectedEvent.project?.endDate && (
+                          <div>
+                            <span className="font-medium">Fin:</span> {new Date(selectedEvent.project.endDate).toLocaleDateString()}
+                          </div>
+                        )}
+                        {!selectedEvent.project?.startDate && (
+                          <div>
+                            <span className="font-medium">Creado:</span> {new Date(selectedEvent.project.createdAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

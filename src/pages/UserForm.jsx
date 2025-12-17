@@ -61,7 +61,12 @@ const UserForm = () => {
 
       // Set current user as default manager and correct default role for new users
       if (!isEditing && user) {
-        const defaultRole = user.role === 'jefe_workforce' ? 'workforce' : 'desarrollador';
+        let defaultRole = 'desarrollador';
+        if (user.role === 'jefe_workforce') {
+          defaultRole = 'workforce';
+        } else if (user.role === 'jefe_desarrollo') {
+          defaultRole = 'desarrollador';
+        }
         setFormData(prev => ({
           ...prev,
           managerId: user.id.toString(),
@@ -153,12 +158,13 @@ const UserForm = () => {
       { value: 'jefe_desarrollo', label: 'Jefe de Desarrollo', icon: '👨‍💼' },
       { value: 'jefe_workforce', label: 'Jefe de Workforce', icon: '👔' },
       { value: 'desarrollador', label: 'Desarrollador', icon: '💻' },
-      { value: 'workforce', label: 'Workforce', icon: '⚡' }
+      { value: 'workforce', label: 'Workforce', icon: '⚡' },
+      { value: 'disenador', label: 'Diseñador', icon: '🎨' }
     ];
 
     // Filter based on current user's role
     if (user?.role === 'jefe_desarrollo') {
-      return allRoles.filter(role => role.value === 'desarrollador');
+      return allRoles.filter(role => ['desarrollador', 'disenador'].includes(role.value));
     } else if (user?.role === 'jefe_workforce') {
       return allRoles.filter(role => role.value === 'workforce');
     }

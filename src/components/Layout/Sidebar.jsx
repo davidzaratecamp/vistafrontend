@@ -13,13 +13,36 @@ import useAuthStore from '../../store/authStore';
 const Sidebar = () => {
   const { user } = useAuthStore();
   const canManageUsers = user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce';
-  const canCreateProjects = user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'desarrollador' || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce';
+  const canCreateProjects = user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'desarrollador';
+  
+  // Determine if user is in development or workforce area
+  const isDevelopmentArea = user?.role === 'jefe_desarrollo' || user?.role === 'desarrollador';
+  const isWorkforceArea = user?.role === 'jefe_workforce' || user?.role === 'workforce';
+
+  // Customize navigation labels based on area
+  const getProjectsLabel = () => {
+    if (isDevelopmentArea) return 'Proyectos de Desarrollo';
+    if (isWorkforceArea) return 'Proyectos de Workforce';
+    return 'Proyectos';
+  };
+
+  const getTasksLabel = () => {
+    if (isDevelopmentArea) return 'Tareas de Desarrollo';
+    if (isWorkforceArea) return 'Tareas de Workforce';
+    return 'Tareas';
+  };
+
+  const getCalendarLabel = () => {
+    if (isDevelopmentArea) return 'Calendario de Desarrollo';
+    if (isWorkforceArea) return 'Calendario de Workforce';
+    return 'Calendario';
+  };
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
-    { name: 'Proyectos', href: '/projects', icon: FolderIcon },
-    { name: 'Calendario', href: '/calendar', icon: CalendarDaysIcon },
-    { name: 'Tareas', href: '/tasks', icon: ClipboardDocumentListIcon },
+    { name: getProjectsLabel(), href: '/projects', icon: FolderIcon },
+    { name: getCalendarLabel(), href: '/calendar', icon: CalendarDaysIcon },
+    { name: getTasksLabel(), href: '/tasks', icon: ClipboardDocumentListIcon },
     { name: 'Reportes', href: '/reports', icon: ChartBarIcon },
   ];
 
@@ -36,7 +59,7 @@ const Sidebar = () => {
     <div className="fixed inset-y-0 left-0 z-40 w-64 bg-white/80 backdrop-blur-xl shadow-2xl border-r border-gray-200/50">
       <div className="flex flex-col h-full">
         {/* Logo Section */}
-        <div className="flex items-center justify-center h-16 px-6 border-b border-gray-200/50">
+        <div className="flex flex-col items-center justify-center h-20 px-6 border-b border-gray-200/50">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
               <span className="text-sm font-bold text-white">V</span>
@@ -45,6 +68,16 @@ const Sidebar = () => {
               VISTA
             </span>
           </div>
+          {/* Area Indicator */}
+          {(isDevelopmentArea || isWorkforceArea) && (
+            <div className={`mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
+              isDevelopmentArea 
+                ? 'bg-blue-100 text-blue-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {isDevelopmentArea ? 'Área Desarrollo' : 'Área Workforce'}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 flex flex-col pt-6 pb-4 overflow-y-auto">
