@@ -186,7 +186,7 @@ const Projects = () => {
                 <PlusIcon className="h-5 w-5 mr-2" />
                 Nueva Tarea
               </Link>
-              {(user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'desarrollador' || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce') && (
+              {(user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'desarrollador' || user?.role === 'disenador') && (
                 <Link 
                   to="/projects/new" 
                   className="inline-flex items-center px-6 py-3 bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -386,7 +386,7 @@ const Projects = () => {
               ? 'Aún no hay proyectos creados. ¡Comienza creando tu primer proyecto!'
               : 'No hay proyectos que coincidan con tus filtros. Intenta ajustar la búsqueda.'}
           </p>
-          {(user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'desarrollador') && projects.length === 0 && (
+          {(user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'desarrollador' || user?.role === 'disenador') && projects.length === 0 && (
             <Link 
               to="/projects/new" 
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
