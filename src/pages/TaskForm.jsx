@@ -23,6 +23,7 @@ const TaskForm = () => {
     description: '',
     projectId: projectIdParam || '',
     assignedTo: '',
+    assignees: [],
     priority: 'media',
     status: 'pendiente',
     estimatedDate: '',
@@ -82,6 +83,7 @@ const TaskForm = () => {
         description: taskData.description || '',
         projectId: taskData.projectId || '',
         assignedTo: taskData.assignedTo || '',
+        assignees: taskData.assignees ? taskData.assignees.map(a => a.id) : [],
         priority: taskData.priority || 'media',
         status: taskData.status || 'pendiente',
         estimatedDate: taskData.estimatedDate ? taskData.estimatedDate.split('T')[0] : '',
@@ -102,6 +104,7 @@ const TaskForm = () => {
         ...formData,
         projectId: parseInt(formData.projectId),
         assignedTo: formData.assignedTo ? parseInt(formData.assignedTo) : null,
+        assignees: formData.assignees.length > 0 ? formData.assignees.map(id => parseInt(id)) : [],
         estimatedDate: formData.estimatedDate || null,
         actualDate: formData.actualDate || null
       };
@@ -131,6 +134,22 @@ const TaskForm = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleAssigneeToggle = (userId) => {
+    setFormData(prev => ({
+      ...prev,
+      assignees: prev.assignees.includes(userId)
+        ? prev.assignees.filter(id => id !== userId)
+        : [...prev.assignees, userId]
+    }));
+  };
+
+  const handleSelectAllAssignees = () => {
+    setFormData(prev => ({
+      ...prev,
+      assignees: prev.assignees.length === users.length ? [] : users.map(u => u.id)
     }));
   };
 
@@ -299,26 +318,52 @@ const TaskForm = () => {
             </div>
 
             <div>
-              <label htmlFor="assignedTo" className="block text-sm font-semibold text-gray-700 mb-2">
-                Asignar a
-              </label>
-              <select
-                id="assignedTo"
-                name="assignedTo"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
-                value={formData.assignedTo}
-                onChange={handleChange}
-              >
-                <option value="">Sin asignar</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.firstName} {user.lastName} ({user.role})
-                  </option>
-                ))}
-              </select>
-              {users.length === 0 && !isLoadingData && (
-                <p className="text-xs text-gray-500 mt-1">
-                  No hay usuarios disponibles
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Asignar a
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSelectAllAssignees}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  {formData.assignees.length === users.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                </button>
+              </div>
+              <div className="border border-gray-200 rounded-xl p-3 bg-white/50 backdrop-blur-sm max-h-40 overflow-y-auto">
+                {users.length === 0 && !isLoadingData ? (
+                  <p className="text-xs text-gray-500 text-center py-2">
+                    No hay usuarios disponibles
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {users.map(user => (
+                      <label 
+                        key={user.id}
+                        className="flex items-center space-x-3 p-2 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.assignees.includes(user.id)}
+                          onChange={() => handleAssigneeToggle(user.id)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {user.role} • {user.email}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {formData.assignees.length > 0 && (
+                <p className="text-xs text-blue-600 mt-1">
+                  {formData.assignees.length} persona{formData.assignees.length !== 1 ? 's' : ''} seleccionada{formData.assignees.length !== 1 ? 's' : ''}
                 </p>
               )}
             </div>

@@ -164,7 +164,7 @@ const ProjectDetail = () => {
     );
   }
 
-  const canEdit = user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || project.createdBy === user?.id;
+  const canEdit = user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce' || project.createdBy === user?.id;
 
   return (
     <div className="space-y-8">
@@ -356,7 +356,7 @@ const ProjectDetail = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </Link>
-                      {(task.createdBy === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce') && (
+                      {(task.createdBy === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce') && (
                         <Link
                           to={`/tasks/${task.id}/edit`}
                           className="p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-all"

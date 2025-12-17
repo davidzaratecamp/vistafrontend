@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import projectService from '../services/projectService';
+import userService from '../services/userService';
 
 const ProjectForm = () => {
   const { id } = useParams();
@@ -14,17 +15,32 @@ const ProjectForm = () => {
     status: 'activo',
     priority: 'media',
     startDate: new Date().toISOString().split('T')[0],
-    endDate: ''
+    endDate: '',
+    members: []
   });
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
+    fetchUsers();
     if (isEdit) {
       fetchProject();
     }
   }, [id, isEdit]);
+
+  const fetchUsers = async () => {
+    try {
+      const usersData = await userService.getUsers();
+      setUsers(usersData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
 
   const fetchProject = async () => {
     try {
@@ -36,7 +52,8 @@ const ProjectForm = () => {
         status: project.status || 'activo',
         priority: project.priority || 'media',
         startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
-        endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''
+        endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
+        members: project.members ? project.members.map(m => m.id) : []
       });
     } catch (err) {
       setError(err.message);
@@ -54,7 +71,8 @@ const ProjectForm = () => {
       
       const submitData = {
         ...formData,
-        endDate: formData.endDate || null
+        endDate: formData.endDate || null,
+        members: formData.members
       };
       
       if (isEdit) {
@@ -76,6 +94,22 @@ const ProjectForm = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleMemberToggle = (userId) => {
+    setFormData(prev => ({
+      ...prev,
+      members: prev.members.includes(userId)
+        ? prev.members.filter(id => id !== userId)
+        : [...prev.members, userId]
+    }));
+  };
+
+  const handleSelectAllMembers = () => {
+    setFormData(prev => ({
+      ...prev,
+      members: prev.members.length === users.length ? [] : users.map(u => u.id)
     }));
   };
 
@@ -212,6 +246,62 @@ const ProjectForm = () => {
                 min={formData.startDate}
               />
             </div>
+          </div>
+
+          {/* Miembros del equipo */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="form-label">
+                Miembros del Equipo
+              </label>
+              <button
+                type="button"
+                onClick={handleSelectAllMembers}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+              >
+                {formData.members.length === users.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+              </button>
+            </div>
+            <div className="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-40 overflow-y-auto">
+              {isLoadingData ? (
+                <p className="text-xs text-gray-500 text-center py-2">
+                  Cargando usuarios...
+                </p>
+              ) : users.length === 0 ? (
+                <p className="text-xs text-gray-500 text-center py-2">
+                  No hay usuarios disponibles
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {users.map(user => (
+                    <label 
+                      key={user.id}
+                      className="flex items-center space-x-3 p-2 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.members.includes(user.id)}
+                        onChange={() => handleMemberToggle(user.id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {user.role} • {user.email}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            {formData.members.length > 0 && (
+              <p className="text-xs text-blue-600 mt-1">
+                {formData.members.length} miembro{formData.members.length !== 1 ? 's' : ''} seleccionado{formData.members.length !== 1 ? 's' : ''}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3 pt-6">

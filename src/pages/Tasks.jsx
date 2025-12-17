@@ -344,7 +344,7 @@ const Tasks = () => {
                         value={task.status}
                         onChange={(e) => handleStatusChange(task.id, e.target.value)}
                         className={`text-xs font-medium rounded-lg px-3 py-1.5 border focus:ring-2 focus:ring-blue-500 ${getStatusColor(task.status)} cursor-pointer`}
-                        disabled={!(task.createdBy === user?.id || task.assignedTo === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce')}
+                        disabled={!(task.createdBy === user?.id || task.assignedTo === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce')}
                       >
                         <option value="pendiente">Pendiente</option>
                         <option value="en_progreso">En Progreso</option>
@@ -378,7 +378,7 @@ const Tasks = () => {
                         >
                           <ChatBubbleLeftIcon className="h-4 w-4" />
                         </Link>
-                        {(task.createdBy === user?.id || task.assignedTo === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce') && (
+                        {(task.createdBy === user?.id || task.assignedTo === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce') && (
                           <Link
                             to={`/tasks/${task.id}/edit`}
                             className="text-yellow-600 hover:text-yellow-800 p-1 rounded"
@@ -387,7 +387,7 @@ const Tasks = () => {
                             <PencilIcon className="h-4 w-4" />
                           </Link>
                         )}
-                        {(task.createdBy === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce') && (
+                        {(task.createdBy === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce') && (
                           <button
                             onClick={() => handleDeleteTask(task.id)}
                             className="text-red-600 hover:text-red-800 p-1 rounded"
