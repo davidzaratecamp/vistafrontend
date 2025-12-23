@@ -121,9 +121,21 @@ const Tasks = () => {
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
+      // Actualizar optimísticamente la UI
+      setTasks(prev => prev.map(t => 
+        t.id === taskId ? { ...t, status: newStatus } : t
+      ));
+
+      // Hacer la llamada al API
       const updatedTask = await taskService.updateTaskStatus(taskId, newStatus);
-      setTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
+      
+      // Actualizar con la respuesta real del servidor
+      if (updatedTask) {
+        setTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
+      }
     } catch (err) {
+      // Revertir el cambio optimista en caso de error
+      await fetchInitialData(); // Recargar todos los datos
       alert('Error al actualizar el estado: ' + err.message);
     }
   };
