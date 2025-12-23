@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import taskService from '../services/taskService';
 import useAuthStore from '../store/authStore';
+import { getAssigneeDisplayInfo, isUserAssignedToTask } from '../utils/taskUtils';
 
 const TaskDetail = () => {
   const { id } = useParams();
@@ -133,7 +134,7 @@ const TaskDetail = () => {
 
   const priorityConfig = getPriorityConfig(task.priority);
   const statusConfig = getStatusConfig(task.status);
-  const canEdit = task.createdBy === user?.id || task.assignedTo === user?.id;
+  const canEdit = task.createdBy === user?.id || isUserAssignedToTask(task, user?.id);
 
   return (
     <div className="space-y-8">
@@ -273,10 +274,21 @@ const TaskDetail = () => {
                 <div>
                   <div className="text-sm text-gray-500">Asignado a</div>
                   <div className="font-medium">
-                    {task.assignee ? 
-                      `${task.assignee.firstName} ${task.assignee.lastName}` : 
-                      'Sin asignar'
-                    }
+                    {(() => {
+                      const assigneeInfo = getAssigneeDisplayInfo(task);
+                      return assigneeInfo.primaryAssignee ? (
+                        <span>
+                          {assigneeInfo.displayText}
+                          {assigneeInfo.hasMultiple && (
+                            <span className="text-sm text-blue-600 ml-1">
+                              (+{assigneeInfo.totalCount - 1} más)
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        assigneeInfo.displayText
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

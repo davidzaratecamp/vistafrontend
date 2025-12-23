@@ -12,6 +12,7 @@ import {
 import taskService from '../services/taskService';
 import projectService from '../services/projectService';
 import useAuthStore from '../store/authStore';
+import { getPrimaryAssignee, getAssigneeDisplayInfo, isUserAssignedToTask, getAssigneeId } from '../utils/taskUtils';
 
 const Tasks = () => {
   const { user } = useAuthStore();
@@ -91,7 +92,10 @@ const Tasks = () => {
     }
 
     if (filters.assignedTo) {
-      filtered = filtered.filter(task => task.assignedTo === parseInt(filters.assignedTo));
+      filtered = filtered.filter(task => {
+        const assigneeId = getAssigneeId(task);
+        return assigneeId === parseInt(filters.assignedTo);
+      });
     }
 
     setFilteredTasks(filtered);
@@ -153,7 +157,12 @@ const Tasks = () => {
   };
 
   const uniqueAssignees = Array.from(
-    new Map(tasks.filter(task => task.assignee).map(task => [task.assignee.id, task.assignee])).values()
+    new Map(
+      tasks
+        .map(task => getPrimaryAssignee(task))
+        .filter(assignee => assignee !== null)
+        .map(assignee => [assignee.id, assignee])
+    ).values()
   );
 
   if (isLoading) {
@@ -323,20 +332,28 @@ const Tasks = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center min-w-0">
-                        {task.assignee ? (
-                          <>
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
-                              <span className="text-xs font-medium text-white">
-                                {task.assignee.firstName?.charAt(0)}{task.assignee.lastName?.charAt(0)}
+                        {(() => {
+                          const assigneeInfo = getAssigneeDisplayInfo(task);
+                          return assigneeInfo.primaryAssignee ? (
+                            <>
+                              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                <span className="text-xs font-medium text-white">
+                                  {assigneeInfo.primaryAssignee.firstName?.charAt(0)}{assigneeInfo.primaryAssignee.lastName?.charAt(0)}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-900 truncate">
+                                {assigneeInfo.displayText}
+                                {assigneeInfo.hasMultiple && (
+                                  <span className="text-xs text-blue-600 ml-1">
+                                    (+{assigneeInfo.totalCount - 1})
+                                  </span>
+                                )}
                               </span>
-                            </div>
-                            <span className="text-sm text-gray-900 truncate">
-                              {task.assignee.firstName} {task.assignee.lastName}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-sm text-gray-500">Sin asignar</span>
-                        )}
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-500">{assigneeInfo.displayText}</span>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -344,7 +361,7 @@ const Tasks = () => {
                         value={task.status}
                         onChange={(e) => handleStatusChange(task.id, e.target.value)}
                         className={`text-xs font-medium rounded-lg px-3 py-1.5 border focus:ring-2 focus:ring-blue-500 ${getStatusColor(task.status)} cursor-pointer`}
-                        disabled={!(task.createdBy === user?.id || task.assignedTo === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce')}
+                        disabled={!(task.createdBy === user?.id || isUserAssignedToTask(task, user?.id) || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce')}
                       >
                         <option value="pendiente">Pendiente</option>
                         <option value="en_progreso">En Progreso</option>
@@ -378,7 +395,7 @@ const Tasks = () => {
                         >
                           <ChatBubbleLeftIcon className="h-4 w-4" />
                         </Link>
-                        {(task.createdBy === user?.id || task.assignedTo === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce') && (
+                        {(task.createdBy === user?.id || isUserAssignedToTask(task, user?.id) || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce' || user?.role === 'workforce') && (
                           <Link
                             to={`/tasks/${task.id}/edit`}
                             className="text-yellow-600 hover:text-yellow-800 p-1 rounded"
@@ -424,7 +441,7 @@ const Tasks = () => {
                     >
                       <EyeIcon className="h-5 w-5" />
                     </Link>
-                    {(task.createdBy === user?.id || task.assignedTo === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce') && (
+                    {(task.createdBy === user?.id || isUserAssignedToTask(task, user?.id) || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce') && (
                       <Link
                         to={`/tasks/${task.id}/edit`}
                         className="text-yellow-600 hover:text-yellow-800 p-1"
@@ -468,20 +485,28 @@ const Tasks = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 font-medium">Asignado a:</span>
                     <div className="flex items-center">
-                      {task.assignee ? (
-                        <>
-                          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
-                            <span className="text-xs font-medium text-white">
-                              {task.assignee.firstName?.charAt(0)}{task.assignee.lastName?.charAt(0)}
+                      {(() => {
+                        const assigneeInfo = getAssigneeDisplayInfo(task);
+                        return assigneeInfo.primaryAssignee ? (
+                          <>
+                            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                              <span className="text-xs font-medium text-white">
+                                {assigneeInfo.primaryAssignee.firstName?.charAt(0)}{assigneeInfo.primaryAssignee.lastName?.charAt(0)}
+                              </span>
+                            </div>
+                            <span className="text-gray-900 text-sm truncate max-w-[120px]">
+                              {assigneeInfo.displayText}
+                              {assigneeInfo.hasMultiple && (
+                                <span className="text-xs text-blue-600 ml-1">
+                                  (+{assigneeInfo.totalCount - 1})
+                                </span>
+                              )}
                             </span>
-                          </div>
-                          <span className="text-gray-900 text-sm truncate max-w-[120px]">
-                            {task.assignee.firstName} {task.assignee.lastName}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-gray-500 text-sm">Sin asignar</span>
-                      )}
+                          </>
+                        ) : (
+                          <span className="text-gray-500 text-sm">{assigneeInfo.displayText}</span>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -500,7 +525,7 @@ const Tasks = () => {
                     value={task.status}
                     onChange={(e) => handleStatusChange(task.id, e.target.value)}
                     className={`text-sm font-medium rounded-lg px-4 py-2 border focus:ring-2 focus:ring-blue-500 w-full ${getStatusColor(task.status)}`}
-                    disabled={!(task.createdBy === user?.id || task.assignedTo === user?.id || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce')}
+                    disabled={!(task.createdBy === user?.id || isUserAssignedToTask(task, user?.id) || user?.role === 'jefe_desarrollo' || user?.role === 'jefe_workforce')}
                   >
                     <option value="pendiente">📋 Pendiente</option>
                     <option value="en_progreso">⚡ En Progreso</option>
